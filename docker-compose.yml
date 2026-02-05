@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: monitor-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: monitor
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_USER: monitor
+      MYSQL_PASSWORD: monitorpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  backend:
+    build:
+      context: ./backend
+    container_name: monitor-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: monitor
+      DB_USER: monitor
+      DB_PASSWORD: monitorpass
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

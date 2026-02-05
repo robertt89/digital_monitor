@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+.env
+
+# Editor
+.idea/
+.vscode/
+.DS_Store
+
+# Docker/MySQL
+.db_data/
+*.log
+
+# Misc
+*.swp
