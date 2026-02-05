@@ -10,7 +10,7 @@ This project spins up a MySQL database together with a FastAPI backend that inge
 - **Docker Compose** orchestration plus an `.env.example` to keep credentials in sync.
 
 ## Running Locally
-1. Copy the environment template if you want to override credentials:
+1. Copy the environment template if you want to override credentials (including host bindings/ports to avoid clashes with other services):
    ```bash
    cp .env.example .env
    ```
@@ -57,14 +57,23 @@ The script never touches credentials; configure them through `.env` (ignored by 
 Each request replaces the snapshot (`sending_card`, `scan_board`) for the matching `control_system`. Historic deltas are out of scope by design.
 
 ## MySQL Access
-Credentials are defined in `docker-compose.yml` and default to:
-- Host: `localhost`
-- Port: `3306`
+Credentials and port bindings come from `.env` (see `.env.example`). By default:
+- DB host bind IP: `127.0.0.1`
+- DB host port: `3306`
 - Database: `monitor`
 - User: `monitor`
 - Password: `monitorpass`
 
 Use `docker compose exec db mysql -u monitor -pmonitorpass monitor` to inspect data.
+
+If those host ports collide with other services, edit `.env`:
+```env
+DB_HOST_BIND=127.0.0.1   # or another interface/IP
+DB_PORT=13306            # exposed host port -> container 3306
+BACKEND_HOST_BIND=0.0.0.0
+BACKEND_PORT=18000       # exposed host port -> container 8000
+```
+The compose file reads these variables so you can run multiple stacks side by side without port conflicts.
 
 ## Development Notes
 - The backend uses SQLAlchemy 2.x with the PyMySQL driver.
