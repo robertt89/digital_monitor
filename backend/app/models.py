@@ -14,6 +14,7 @@ class ControlSystem(Base):
     __tablename__ = "control_system"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    device_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     com_port: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     screen_count: Mapped[int | None]
     sender_count: Mapped[int | None]
@@ -33,6 +34,7 @@ class SendingCard(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     control_system_id: Mapped[int] = mapped_column(ForeignKey("control_system.id", ondelete="CASCADE"), nullable=False)
+    device_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     sender_index: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     dvi_status: Mapped[bool | None] = mapped_column(Boolean)
     is_video_ok: Mapped[bool | None] = mapped_column(Boolean)
@@ -50,6 +52,7 @@ class ScanBoard(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     control_system_id: Mapped[int] = mapped_column(ForeignKey("control_system.id", ondelete="CASCADE"), nullable=False)
+    device_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     sender_index: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     port_index: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     scan_board_index: Mapped[int] = mapped_column(Integer, nullable=False)
