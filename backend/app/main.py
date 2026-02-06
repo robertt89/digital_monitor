@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from collections import defaultdict
 
 import logging
 
@@ -127,6 +128,60 @@ def get_monitor(device_id: str, session: Session = Depends(get_session)) -> dict
         .order_by(ScanBoard.sender_index, ScanBoard.port_index, ScanBoard.scan_board_index)
     ).all()
 
+    return _snapshot_payload(control_system, sending_cards, scan_boards)
+
+
+@app.get("/monitors")
+def list_monitors(session: Session = Depends(get_session)) -> list[dict[str, object]]:
+    control_systems = session.scalars(select(ControlSystem).order_by(ControlSystem.device_id)).all()
+    if not control_systems:
+        return []
+
+    control_ids = [cs.id for cs in control_systems]
+    if not control_ids:
+        return []
+
+    sending_cards = session.scalars(
+        select(SendingCard).where(SendingCard.control_system_id.in_(control_ids)).order_by(SendingCard.control_system_id, SendingCard.sender_index)
+    ).all()
+    scan_boards = session.scalars(
+        select(ScanBoard)
+        .where(ScanBoard.control_system_id.in_(control_ids))
+        .order_by(ScanBoard.control_system_id, ScanBoard.sender_index, ScanBoard.port_index, ScanBoard.scan_board_index)
+    ).all()
+
+    send_by_control = defaultdict(list)
+    for card in sending_cards:
+        send_by_control[card.control_system_id].append(card)
+
+    scan_by_control = defaultdict(list)
+    for board in scan_boards:
+        scan_by_control[board.control_system_id].append(board)
+
+    return [
+        _snapshot_payload(cs, send_by_control.get(cs.id, []), scan_by_control.get(cs.id, []))
+        for cs in control_systems
+    ]
+
+
+def _format_timestamp(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc).isoformat()
+    return value.astimezone(timezone.utc).isoformat()
+
+
+def _status_short(status: str | None) -> str:
+    mapping = {"OK": "OK", "Error": "E", "Unknown": "U"}
+    if status is None:
+        return "U"
+    return mapping.get(status, "U")
+
+
+def _snapshot_payload(
+    control_system: ControlSystem, sending_cards: list[SendingCard], scan_boards: list[ScanBoard]
+) -> dict[str, object]:
     return {
         "device_id": control_system.device_id,
         "ts": _format_timestamp(control_system.last_update),
@@ -157,18 +212,3 @@ def get_monitor(device_id: str, session: Session = Depends(get_session)) -> dict
             for board in scan_boards
         ],
     }
-
-
-def _format_timestamp(value: datetime | None) -> str | None:
-    if value is None:
-        return None
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc).isoformat()
-    return value.astimezone(timezone.utc).isoformat()
-
-
-def _status_short(status: str | None) -> str:
-    mapping = {"OK": "OK", "Error": "E", "Unknown": "U"}
-    if status is None:
-        return "U"
-    return mapping.get(status, "U")
