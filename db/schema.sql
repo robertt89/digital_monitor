@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS control_system (
     id INT PRIMARY KEY AUTO_INCREMENT,
     device_id VARCHAR(64) NOT NULL UNIQUE,
     com_port VARCHAR(20) NOT NULL,
+    global_brightness TINYINT UNSIGNED,
     screen_count INT,
     sender_count INT,
     is_initialized BOOLEAN DEFAULT FALSE,
@@ -52,6 +53,7 @@ SELECT
     cs.id,
     cs.device_id,
     cs.com_port,
+    cs.global_brightness,
     cs.is_initialized,
     cs.last_update,
     COUNT(DISTINCT sc.id) as total_sending_cards,
@@ -63,4 +65,4 @@ SELECT
 FROM control_system cs
 LEFT JOIN sending_card sc ON cs.id = sc.control_system_id
 LEFT JOIN scan_board sb ON cs.id = sb.control_system_id
-GROUP BY cs.id, cs.device_id, cs.com_port, cs.is_initialized, cs.last_update;
+GROUP BY cs.id, cs.device_id, cs.com_port, cs.global_brightness, cs.is_initialized, cs.last_update;

@@ -62,9 +62,9 @@ This project spins up a MySQL database together with a FastAPI backend that inge
 The script never touches credentials; configure them through `.env` (ignored by Git) and keep production secrets on the server only.
 
 ## Payload Expectations
-`POST /ingest` validates the payload exactly as described in `json_scanboard.docx`, adding `sys.dev` for your internal device ID:
+`POST /ingest` validates the payload exactly as described in `json_scanboard.docx`, adding `sys.dev` for your internal device ID and `sys.bri` for brillo global:
 - `ts` must be ISO-8601.
-- `sys` describes the control system. `dev` is your internal identifier (stored as `device_id`) and `port` is the COM port. For backward compatibility you may also send a root-level `device_id`; the service will use `sys.dev` first and fall back to the root field.
+- `sys` describes the control system. `dev` is your internal identifier (stored as `device_id`), `bri` es el brillo global (0-100) y `port` es el COM reportado. For backward compatibility you may also send a root-level `device_id`; the service will use `sys.dev` first and fall back to the root field.
 - `snds` is an array of objects with `i`, `dvi`, `vid` (0/1 accepted).
 - `bds` is an array of 6-item lists `[sender, port, board, status, temperature, voltage]`. Status short codes (`OK`, `E`, `U`) are normalized to the ENUM values defined in `monitor.sql`.
 - Duplicate `snds[].i` or `bds[][sender,port,board]` entries are automatically deduplicated per payload, keeping the last occurrence.

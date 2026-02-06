@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 class SystemModel(BaseModel):
     port: str = Field(min_length=1, max_length=20)
     dev: str | None = Field(default=None, min_length=1, max_length=64)
+    bri: int | None = Field(default=None, ge=0, le=100)
     scr: int = Field(ge=0, le=200)
     snd: int = Field(ge=0, le=255)
     init: int = Field(ge=0, le=1)

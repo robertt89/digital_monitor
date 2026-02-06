@@ -3,6 +3,7 @@
   "sys": {
     "dev": "DEVICE-123",
     "port": "COM3",
+    "bri": 75,
     "scr": 2,
     "snd": 1,
     "init": 1

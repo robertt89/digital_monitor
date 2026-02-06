@@ -48,6 +48,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
         control_system = ControlSystem(
             device_id=device_id,
             com_port=payload.sys.port,
+            global_brightness=payload.sys.bri,
             screen_count=payload.sys.scr,
             sender_count=payload.sys.snd,
             is_initialized=payload.sys.init_bool,
@@ -58,6 +59,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
     else:
         control_system.device_id = device_id
         control_system.com_port = payload.sys.port
+        control_system.global_brightness = payload.sys.bri
         control_system.screen_count = payload.sys.scr
         control_system.sender_count = payload.sys.snd
         control_system.is_initialized = payload.sys.init_bool
@@ -199,6 +201,7 @@ def _snapshot_payload(
         "ts": _format_timestamp(control_system.last_update),
         "sys": {
             "port": control_system.com_port,
+            "bri": control_system.global_brightness,
             "scr": control_system.screen_count or 0,
             "snd": control_system.sender_count or 0,
             "init": 1 if control_system.is_initialized else 0,
