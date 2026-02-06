@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from collections import defaultdict
+import os
 
 import logging
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,6 +18,16 @@ from .schemas import MonitorPayload
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LED Monitor Ingest API")
+
+allowed_origins = os.getenv("CORS_ALLOW_ORIGINS", "*")
+origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=False,
+)
 
 
 @app.get("/health")

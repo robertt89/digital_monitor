@@ -36,6 +36,8 @@ This project spins up a MySQL database together with a FastAPI backend that inge
    curl http://localhost:8000/monitors
    ```
    Devuelve un arreglo con el mismo formato para cada pantalla registrada.
+6. Habilitar CORS para tus frontends:
+   - Ajusta `CORS_ALLOW_ORIGINS` en `.env`. Usa una lista separada por comas (por ejemplo `https://biumedia.com,https://otrodominio.com`) o `*` para permitir cualquier origen.
 
 ## Git Workflow for Deployment
 1. Initialize the repository locally (already done in this workspace) and point it to your remote:
@@ -87,6 +89,7 @@ DB_HOST_BIND=127.0.0.1   # or another interface/IP
 DB_PORT=13306            # exposed host port -> container 3306
 BACKEND_HOST_BIND=0.0.0.0
 BACKEND_PORT=18000       # exposed host port -> container 8000
+CORS_ALLOW_ORIGINS=https://biumedia.com,https://monitor.netrapanel.com
 ```
 The compose file reads these variables so you can run multiple stacks side by side without port conflicts.
 
