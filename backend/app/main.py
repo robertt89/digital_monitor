@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timezone
+from datetime import datetime, timezone
 
 import logging
 
@@ -110,3 +110,65 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
         "sending_cards": len(sending_rows),
         "scan_boards": len(scan_rows),
     }
+
+
+@app.get("/monitor/{device_id}")
+def get_monitor(device_id: str, session: Session = Depends(get_session)) -> dict[str, object]:
+    control_system = session.scalar(select(ControlSystem).where(ControlSystem.device_id == device_id))
+    if control_system is None:
+        raise HTTPException(status_code=404, detail="device_id not found")
+
+    sending_cards = session.scalars(
+        select(SendingCard).where(SendingCard.control_system_id == control_system.id).order_by(SendingCard.sender_index)
+    ).all()
+    scan_boards = session.scalars(
+        select(ScanBoard)
+        .where(ScanBoard.control_system_id == control_system.id)
+        .order_by(ScanBoard.sender_index, ScanBoard.port_index, ScanBoard.scan_board_index)
+    ).all()
+
+    return {
+        "device_id": control_system.device_id,
+        "ts": _format_timestamp(control_system.last_update),
+        "sys": {
+            "port": control_system.com_port,
+            "scr": control_system.screen_count or 0,
+            "snd": control_system.sender_count or 0,
+            "init": 1 if control_system.is_initialized else 0,
+        },
+        "snds": [
+            {
+                "i": card.sender_index,
+                "dvi": 1 if card.dvi_status else 0,
+                "vid": 1 if card.is_video_ok else 0,
+                "last_update": _format_timestamp(card.last_update),
+            }
+            for card in sending_cards
+        ],
+        "bds": [
+            [
+                board.sender_index,
+                board.port_index,
+                board.scan_board_index,
+                _status_short(board.status),
+                board.temperature,
+                board.voltage,
+            ]
+            for board in scan_boards
+        ],
+    }
+
+
+def _format_timestamp(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc).isoformat()
+    return value.astimezone(timezone.utc).isoformat()
+
+
+def _status_short(status: str | None) -> str:
+    mapping = {"OK": "OK", "Error": "E", "Unknown": "U"}
+    if status is None:
+        return "U"
+    return mapping.get(status, "U")

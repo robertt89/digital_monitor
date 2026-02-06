@@ -7,6 +7,7 @@ This project spins up a MySQL database together with a FastAPI backend that inge
 - **FastAPI backend** (`backend/app`) exposing:
   - `GET /health` – container readiness probe.
   - `POST /ingest` – accepts the LED monitor JSON payload and refreshes the database snapshot for the provided `sys.port`.
+  - `GET /monitor/{device_id}` – returns the last stored snapshot for a given `device_id`.
 - **Docker Compose** orchestration plus an `.env.example` to keep credentials in sync.
 
 ## Running Locally
@@ -55,6 +56,8 @@ The script never touches credentials; configure them through `.env` (ignored by 
 - `bds` is an array of 6-item lists `[sender, port, board, status, temperature, voltage]`. Status short codes (`OK`, `E`, `U`) are normalized to the ENUM values defined in `monitor.sql`.
 - Duplicate `snds[].i` or `bds[][sender,port,board]` entries are automatically deduplicated per payload, keeping the last occurrence.
 
+`GET /monitor/{device_id}` devuelve el último snapshot persistido con el mismo formato (más una marca de tiempo ISO en `ts` y `snds[].last_update`). Usa este endpoint para alimentar dashboards sin tocar directamente MySQL.
+
 Each request replaces the snapshot (`sending_card`, `scan_board`) for the matching `control_system`. Historic deltas are out of scope by design.
 
 ## MySQL Access
@@ -80,3 +83,8 @@ The compose file reads these variables so you can run multiple stacks side by si
 - The backend uses SQLAlchemy 2.x with the PyMySQL driver.
 - `db/schema.sql` re-creates the `monitor` database if needed, so you can drop volumes safely.
 - When `sys.init = 0`, the payload is still persisted (even if `snds`/`bds` are empty) to capture controller state.
+4. Consultar datos almacenados para una pantalla:
+   ```bash
+   curl http://localhost:8000/monitor/DEVICE-123
+   ```
+   Sustituye `DEVICE-123` por el `sys.dev` usado al ingerir datos.
