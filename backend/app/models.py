@@ -15,7 +15,7 @@ class ControlSystem(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     device_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    com_port: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    com_port: Mapped[str] = mapped_column(String(20), nullable=False)
     screen_count: Mapped[int | None]
     sender_count: Mapped[int | None]
     is_initialized: Mapped[bool] = mapped_column(Boolean, default=False)

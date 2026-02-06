@@ -6,12 +6,14 @@ USE monitor;
 CREATE TABLE IF NOT EXISTS control_system (
     id INT PRIMARY KEY AUTO_INCREMENT,
     device_id VARCHAR(64) NOT NULL UNIQUE,
-    com_port VARCHAR(20) NOT NULL UNIQUE,
+    com_port VARCHAR(20) NOT NULL,
     screen_count INT,
     sender_count INT,
     is_initialized BOOLEAN DEFAULT FALSE,
     last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX IF NOT EXISTS idx_control_com_port ON control_system (com_port);
 
 -- Tabla de tarjetas enviadoras (sending cards)
 CREATE TABLE IF NOT EXISTS sending_card (
