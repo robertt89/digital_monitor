@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import timezone
 
+import logging
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,6 +11,8 @@ from sqlalchemy.orm import Session
 from .database import get_session
 from .models import ControlSystem, ScanBoard, SendingCard
 from .schemas import MonitorPayload
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LED Monitor Ingest API")
 
@@ -83,6 +87,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
         session.commit()
     except Exception as exc:  # pragma: no cover - defensive rollback
         session.rollback()
+        logger.exception("Failed to persist payload for device_id=%s", device_id)
         raise HTTPException(status_code=500, detail="Failed to persist payload") from exc
 
     return {
