@@ -8,10 +8,17 @@ from pydantic import BaseModel, Field, field_validator
 
 class SystemModel(BaseModel):
     port: str = Field(min_length=1, max_length=20)
-    dev: str = Field(min_length=1, max_length=64)
+    dev: str | None = Field(default=None, min_length=1, max_length=64)
     scr: int = Field(ge=0, le=200)
     snd: int = Field(ge=0, le=255)
     init: int = Field(ge=0, le=1)
+
+    @field_validator("dev", mode="before")
+    @classmethod
+    def _coerce_device_id(cls, value: Any) -> str | None:
+        if value in (None, "", "null"):
+            return None
+        return str(value)
 
     @property
     def init_bool(self) -> bool:
@@ -66,6 +73,7 @@ class MonitorPayload(BaseModel):
     sys: SystemModel
     snds: List[SendingCardModel]
     bds: List[ScanBoardModel]
+    device_id: str | None = Field(default=None)
 
     @field_validator("bds", mode="before")
     @classmethod
@@ -99,5 +107,12 @@ class MonitorPayload(BaseModel):
         if isinstance(value, list):
             return value
         raise ValueError("snds must be a list")
+
+    @field_validator("device_id", mode="before")
+    @classmethod
+    def _coerce_root_device_id(cls, value: Any) -> str | None:
+        if value in (None, "", "null"):
+            return None
+        return str(value)
 
     model_config = {"extra": "forbid"}

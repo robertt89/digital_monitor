@@ -22,10 +22,14 @@ def health() -> dict[str, str]:
 def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> dict[str, int]:
     timestamp = payload.ts.astimezone(timezone.utc).replace(tzinfo=None)
 
-    control_system = session.scalar(select(ControlSystem).where(ControlSystem.device_id == payload.sys.dev))
+    device_id = payload.sys.dev or payload.device_id
+    if not device_id:
+        raise HTTPException(status_code=422, detail="device_id is required either in sys.dev or root device_id")
+
+    control_system = session.scalar(select(ControlSystem).where(ControlSystem.device_id == device_id))
     if control_system is None:
         control_system = ControlSystem(
-            device_id=payload.sys.dev,
+            device_id=device_id,
             com_port=payload.sys.port,
             screen_count=payload.sys.scr,
             sender_count=payload.sys.snd,
@@ -35,6 +39,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
         session.add(control_system)
         session.flush()
     else:
+        control_system.device_id = device_id
         control_system.com_port = payload.sys.port
         control_system.screen_count = payload.sys.scr
         control_system.sender_count = payload.sys.snd
@@ -46,7 +51,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
     sending_rows = [
         SendingCard(
             control_system_id=control_system.id,
-            device_id=payload.sys.dev,
+            device_id=device_id,
             sender_index=card.i,
             dvi_status=card.dvi_bool,
             is_video_ok=card.vid_bool,
@@ -61,7 +66,7 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
     scan_rows = [
         ScanBoard(
             control_system_id=control_system.id,
-            device_id=payload.sys.dev,
+            device_id=device_id,
             sender_index=board.sender_index,
             port_index=board.port_index,
             scan_board_index=board.scan_board_index,
