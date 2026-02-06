@@ -10,10 +10,9 @@ CREATE TABLE IF NOT EXISTS control_system (
     screen_count INT,
     sender_count INT,
     is_initialized BOOLEAN DEFAULT FALSE,
-    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_control_com_port (com_port)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE INDEX IF NOT EXISTS idx_control_com_port ON control_system (com_port);
 
 -- Tabla de tarjetas enviadoras (sending cards)
 CREATE TABLE IF NOT EXISTS sending_card (
