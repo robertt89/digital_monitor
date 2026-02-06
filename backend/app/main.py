@@ -52,8 +52,9 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
 
     # Replace sending cards snapshot
     session.query(SendingCard).filter_by(control_system_id=control_system.id).delete(synchronize_session=False)
-    sending_rows = [
-        SendingCard(
+    unique_senders: dict[int, SendingCard] = {}
+    for card in payload.snds:
+        unique_senders[card.i] = SendingCard(
             control_system_id=control_system.id,
             device_id=device_id,
             sender_index=card.i,
@@ -61,14 +62,22 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
             is_video_ok=card.vid_bool,
             last_update=timestamp,
         )
-        for card in payload.snds
-    ]
+    sending_rows = list(unique_senders.values())
+    if len(sending_rows) < len(payload.snds):
+        logger.info(
+            "Deduplicated sending cards for device_id=%s: %s -> %s entries",
+            device_id,
+            len(payload.snds),
+            len(sending_rows),
+        )
     session.add_all(sending_rows)
 
     # Replace scan board snapshot
     session.query(ScanBoard).filter_by(control_system_id=control_system.id).delete(synchronize_session=False)
-    scan_rows = [
-        ScanBoard(
+    unique_boards: dict[tuple[int, int, int], ScanBoard] = {}
+    for board in payload.bds:
+        key = (board.sender_index, board.port_index, board.scan_board_index)
+        unique_boards[key] = ScanBoard(
             control_system_id=control_system.id,
             device_id=device_id,
             sender_index=board.sender_index,
@@ -79,8 +88,14 @@ def ingest(payload: MonitorPayload, session: Session = Depends(get_session)) -> 
             voltage=board.voltage,
             last_update=timestamp,
         )
-        for board in payload.bds
-    ]
+    scan_rows = list(unique_boards.values())
+    if len(scan_rows) < len(payload.bds):
+        logger.info(
+            "Deduplicated scan boards for device_id=%s: %s -> %s entries",
+            device_id,
+            len(payload.bds),
+            len(scan_rows),
+        )
     session.add_all(scan_rows)
 
     try:
