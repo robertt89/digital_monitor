@@ -65,4 +65,4 @@ SELECT
 FROM control_system cs
 LEFT JOIN sending_card sc ON cs.id = sc.control_system_id
 LEFT JOIN scan_board sb ON cs.id = sb.control_system_id
-GROUP BY cs.id, cs.device_id, cs.com_port, cs.global_brightness, cs.is_initialized, cs.last_update;
+GROUP BY cs.id, cs.device_id, cs.com_port, cs.is_initialized, cs.last_update;
